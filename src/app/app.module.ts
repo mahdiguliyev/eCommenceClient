@@ -10,8 +10,6 @@ import { ToastrModule } from 'ngx-toastr';
 import { NgxSpinnerModule } from 'ngx-spinner';
 import { BaseComponent } from './base/base.component';
 import { HttpClientModule } from '@angular/common/http';
-import { DeleteDirective } from './directives/admin/delete.directive';
-import { DeleteDialogComponent } from './dialogs/delete-dialog/delete-dialog.component';
 
 @NgModule({
   declarations: [
