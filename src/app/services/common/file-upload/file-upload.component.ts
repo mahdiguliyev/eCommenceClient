@@ -1,9 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, Input } from '@angular/core';
-import { FileSystemDirectoryEntry, FileSystemFileEntry, NgxFileDropEntry } from 'ngx-file-drop';
+import { FileSystemFileEntry, NgxFileDropEntry } from 'ngx-file-drop';
 import { AlertifyService, MessageType, Position } from '../../admin/alertify.service';
 import { CustomToastrService, ToastrMessageType, ToastrPosition } from '../../ui/custom-toastr.service';
 import { HttpClientService } from '../httpclient.service';
+import { MatDialog } from '@angular/material/dialog';
+import { DialogService } from '../dialog.service';
+import { FileUploadDialogComponent, FileUploadDialogState } from 'src/app/dialogs/file-upload-dialog/file-upload-dialog.component';
 
 @Component({
   selector: 'app-file-upload',
@@ -15,10 +18,12 @@ export class FileUploadComponent {
   constructor(
     private httpClientService: HttpClientService,
     private alertifyService: AlertifyService,
-    private customToastrService: CustomToastrService) { }
+    private customToastrService: CustomToastrService,
+    private dialog: MatDialog,
+    private dialogService: DialogService) { }
 
   public files: NgxFileDropEntry[];
-  
+
   @Input() options: Partial<UploadFileOptions>;
 
   public selectedFiles(files: NgxFileDropEntry[]) {
@@ -30,47 +35,53 @@ export class FileUploadComponent {
       });
     }
 
-    this.httpClientService.post({
-      controller: this.options.controller,
-      action: this.options.action,
-      queryString: this.options.queryString
-    }, fileData).subscribe(data => {
+    this.dialogService.openDialog({
+      componentType: FileUploadDialogComponent,
+      data: FileUploadDialogState.Yes,
+      
+      afterClosed: () => {
+        this.httpClientService.post({
+          controller: this.options.controller,
+          action: this.options.action,
+          queryString: this.options.queryString
+        }, fileData).subscribe(data => {
 
-      const successMessage: string = "Files are uploaded successfully.";
+          const successMessage: string = "Files are uploaded successfully.";
 
-      if (this.options.isAdminPage) {
-        this.alertifyService.message(successMessage, {
-          dismissOthers: true,
-          messageType: MessageType.Success,
-          position: Position.TopRight
-        });
-      } else {
+          if (this.options.isAdminPage) {
+            this.alertifyService.message(successMessage, {
+              dismissOthers: true,
+              messageType: MessageType.Success,
+              position: Position.TopRight
+            });
+          } else {
 
-        this.customToastrService.message(successMessage, "Fail", {
-          messageType: ToastrMessageType.Success,
-          position: ToastrPosition.TopRight
-        });
-        
-      }
-    }, (errorResponse: HttpErrorResponse) => {
+            this.customToastrService.message(successMessage, "Fail", {
+              messageType: ToastrMessageType.Success,
+              position: ToastrPosition.TopRight
+            });
 
-      const errorMessage: string = "Files are not uploaded due to some reasons.";
+          }
+        }, (errorResponse: HttpErrorResponse) => {
 
-      if (this.options.isAdminPage) {
-        this.alertifyService.message(errorMessage, {
-          dismissOthers: true,
-          messageType: MessageType.Error,
-          position: Position.TopRight
-        });
-      } else {
-        this.customToastrService.message(errorMessage, "Error",{
-          messageType: ToastrMessageType.Error,
-          position: ToastrPosition.TopRight
+          const errorMessage: string = "Files are not uploaded due to some reasons.";
+
+          if (this.options.isAdminPage) {
+            this.alertifyService.message(errorMessage, {
+              dismissOthers: true,
+              messageType: MessageType.Error,
+              position: Position.TopRight
+            });
+          } else {
+            this.customToastrService.message(errorMessage, "Error", {
+              messageType: ToastrMessageType.Error,
+              position: ToastrPosition.TopRight
+            });
+          }
         });
       }
     });
   }
-
 }
 
 export class UploadFileOptions {
